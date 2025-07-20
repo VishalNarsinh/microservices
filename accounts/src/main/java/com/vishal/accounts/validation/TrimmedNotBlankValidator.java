@@ -1,4 +1,4 @@
-package com.vishal.validation;
+package com.vishal.accounts.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

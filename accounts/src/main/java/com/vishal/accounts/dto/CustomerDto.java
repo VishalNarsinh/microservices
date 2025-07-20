@@ -1,11 +1,10 @@
 package com.vishal.accounts.dto;
 
-import com.vishal.validation.TrimmedNotBlank;
+import com.vishal.accounts.validation.TrimmedNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
