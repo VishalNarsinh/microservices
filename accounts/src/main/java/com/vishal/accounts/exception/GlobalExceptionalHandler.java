@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -69,4 +70,28 @@ public class GlobalExceptionalHandler extends ResponseEntityExceptionHandler {
         );
         return new ResponseEntity<>(errorResponseDTO, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(DuplicateMobileNumberException.class)
+    public ResponseEntity<ErrorResponseDto> handleDuplicateMobileNumberException(DuplicateMobileNumberException exception,
+                                                                                 WebRequest webRequest){
+        ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
+                webRequest.getDescription(false),
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponseDTO, HttpStatus.BAD_REQUEST);
+    }
+
+//    @ExceptionHandler(NoResourceFoundException.class)
+//    public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException exception,
+//                                                                            WebRequest webRequest) {
+//        ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
+//                webRequest.getDescription(false),
+//                HttpStatus.NOT_FOUND,
+//                exception.getMessage(),
+//                LocalDateTime.now()
+//        );
+//        return new ResponseEntity<>(errorResponseDTO, HttpStatus.NOT_FOUND);
+//    }
 }

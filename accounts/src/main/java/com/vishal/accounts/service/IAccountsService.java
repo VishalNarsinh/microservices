@@ -1,6 +1,9 @@
 package com.vishal.accounts.service;
 
+import com.vishal.accounts.dto.AccountsDto;
 import com.vishal.accounts.dto.CustomerDto;
+
+import java.util.List;
 
 public interface IAccountsService {
     /**
@@ -30,4 +33,10 @@ public interface IAccountsService {
      * @return boolean indicating if the delete of Account details is successful or not
      */
     boolean deleteAccount(String mobileNumber);
+
+    /*
+    *
+    * @return List of Accounts
+    * */
+    List<CustomerDto> getAllAccounts();
 }

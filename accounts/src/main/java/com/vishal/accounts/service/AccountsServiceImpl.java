@@ -5,6 +5,7 @@ import com.vishal.accounts.dto.AccountsDto;
 import com.vishal.accounts.dto.CustomerDto;
 import com.vishal.accounts.entity.Accounts;
 import com.vishal.accounts.entity.Customer;
+import com.vishal.accounts.exception.DuplicateMobileNumberException;
 import com.vishal.accounts.exception.ResourceNotFoundException;
 import com.vishal.accounts.mapper.AccountsMapper;
 import com.vishal.accounts.mapper.CustomerMapper;
@@ -14,8 +15,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -30,7 +31,7 @@ public class AccountsServiceImpl implements IAccountsService {
         
         Optional<Customer> optionalCustomer = customerRepository.findByMobileNumber(customer.getMobileNumber());
         if(optionalCustomer.isPresent()){
-            throw new RuntimeException("Customer already registered with given mobileNumber "+customer.getMobileNumber());
+            throw new DuplicateMobileNumberException("Customer already registered with given mobileNumber "+customer.getMobileNumber());
         }
         customer.setCreatedAt(LocalDateTime.now());
         customer.setCreatedBy("Anonymous");
@@ -69,18 +70,14 @@ public class AccountsServiceImpl implements IAccountsService {
         boolean isUpdated = false;
         AccountsDto accountsDto = customerDto.getAccountsDto();
         if(accountsDto !=null ){
-            Accounts accounts = accountsRepository.findById(accountsDto.getAccountNumber()).orElseThrow(
-                    () -> new ResourceNotFoundException("Account", "AccountNumber", accountsDto.getAccountNumber().toString())
-            );
+            Accounts accounts = accountsRepository.findById(accountsDto.getAccountNumber()).orElseThrow(() -> new ResourceNotFoundException("Account", "AccountNumber", accountsDto.getAccountNumber().toString()));
             AccountsMapper.mapToAccounts(accountsDto, accounts);
             accounts.setUpdatedAt(LocalDateTime.now());
             accounts.setUpdatedBy("Anonymous");
             accounts = accountsRepository.save(accounts);
 
             Long customerId = accounts.getCustomerId();
-            Customer customer = customerRepository.findById(customerId).orElseThrow(
-                    () -> new ResourceNotFoundException("Customer", "CustomerID", customerId.toString())
-            );
+            Customer customer = customerRepository.findById(customerId).orElseThrow(() -> new ResourceNotFoundException("Customer", "CustomerID", customerId.toString()));
             CustomerMapper.mapToCustomer(customerDto,customer);
             customer.setUpdatedAt(LocalDateTime.now());
             customer.setUpdatedBy("Anonymous");
@@ -101,6 +98,36 @@ public class AccountsServiceImpl implements IAccountsService {
         );
         accountsRepository.deleteByCustomerId(customer.getCustomerId());
         customerRepository.deleteById(customer.getCustomerId());
+        HashSet<Integer> accounts = new HashSet<Integer>();
         return true;
+    }
+
+    @Override
+    public List<CustomerDto> getAllAccounts() {
+//        List<Customer> customerList = customerRepository.findAll();
+//        List<AccountsDto> accountsDtoList = new ArrayList<>();
+//        customerList.stream().forEach((customer) -> {
+//            accountsRepository.findByCustomerId(customer.getCustomerId()).ifPresent(accounts -> accountsDtoList.add(AccountsMapper.mapToAccountsDto(accounts,new AccountsDto())));
+//        });
+//        List<CustomerDto> customerDtoList = customerList.stream().map(customer -> {
+//            CustomerDto customerDto = CustomerMapper.mapToCustomerDto(customer, new CustomerDto());
+//            customerDto.setAccountsDto(accountsDtoList.get(customerList.indexOf(customer)));
+//            return customerDto;
+//        }).collect(Collectors.toList());
+//        return customerDtoList;
+        List<Customer> customerList = customerRepository.findAll();
+        List<Long> customerIds = customerList.stream().map(Customer::getCustomerId).toList();
+        List<Accounts> accountsList = accountsRepository.findByCustomerIdIn(customerIds);
+
+        Map<Long, AccountsDto> customerAccountsMap = accountsList.stream().collect(
+                Collectors.toMap(Accounts::getCustomerId, accounts -> AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()))
+        );
+
+        return customerList.stream().map(customer -> {
+            CustomerDto customerDto = CustomerMapper.mapToCustomerDto(customer, new CustomerDto());
+            customerDto.setAccountsDto(customerAccountsMap.get(customer.getCustomerId()));
+            return customerDto;
+        }).collect(Collectors.toList());
+
     }
 }
