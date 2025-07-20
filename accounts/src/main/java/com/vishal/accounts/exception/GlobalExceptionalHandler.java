@@ -1,6 +1,8 @@
 package com.vishal.accounts.exception;
 
 import com.vishal.accounts.dto.ErrorResponseDto;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -76,12 +78,51 @@ public class GlobalExceptionalHandler extends ResponseEntityExceptionHandler {
                                                                                  WebRequest webRequest){
         ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
                 webRequest.getDescription(false),
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.CONFLICT,
                 exception.getMessage(),
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(errorResponseDTO, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponseDTO, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        String dbMessage = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+
+        ConstraintViolation violation = ConstraintViolation.fromMessage(dbMessage);
+        String message = ConstraintViolation.resolveFriendlyMessage(dbMessage);
+
+        ErrorResponseDto errorResponse = new ErrorResponseDto(
+                "uri=" + request.getRequestURI(),
+                violation.getStatus(),
+                message,
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, violation.getStatus());
+    }
+
+    private static final Map<String, String> CONSTRAINT_MESSAGES = Map.of(
+            "mobile_number_UNIQUE", "Duplicate mobile number. This number already exists.",
+            "email_UNIQUE", "Duplicate email. This email is already in use."
+    );
+
+    private String extractMeaningfulMessage(String message) {
+        if (message.contains("Duplicate entry")) {
+            for (Map.Entry<String, String> entry : CONSTRAINT_MESSAGES.entrySet()) {
+                if (message.contains(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+            return "Duplicate entry. A unique constraint was violated.";
+        }
+        return message;
+    }
+
+
 
 //    @ExceptionHandler(NoResourceFoundException.class)
 //    public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException exception,
