@@ -14,12 +14,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
 
 @Tag(
         name = "Accounts",
@@ -27,12 +31,15 @@ import org.springframework.web.bind.annotation.*;
 )
 @RestController
 @RequestMapping(value = "/api/",produces = MediaType.APPLICATION_JSON_VALUE)
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Validated
 @Slf4j
 public class AccountController {
 
-    IAccountsService accountsService;
+    private final IAccountsService accountsService;
+
+    @Value("${build.version}")
+    private String buildVersion;
 
     @Operation(
             summary = "Create Account REST API",
@@ -168,7 +175,34 @@ public class AccountController {
     @ApiResponse(responseCode = "200", description = "HTTP Status OK")
     @GetMapping("/accounts/all")
     public ResponseEntity<?> getAllCustomers() {
+        
         return ResponseEntity.ok(accountsService.getAllAccounts());
+    }
+
+
+    @Operation(
+            summary = "Get Build Information",
+            description = "Get Build Information that is used to track the version of the application"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "HTTP Status OK"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "HTTP Status Internal Server Error",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorResponseDto.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/build-info")
+    public ResponseEntity<HashMap<String,String>> getBuildVersion() {
+        HashMap<String,String> map = new HashMap<>();
+        map.put("buildVersion", buildVersion);
+        return ResponseEntity.ok(map);
     }
 }
 
