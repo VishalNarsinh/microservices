@@ -1,6 +1,6 @@
 services:
   accounts:
-    image: "vishalnarsinh/accounts:s4"
+    image: "vishalnarsinh/accounts:s6"
     container_name: "account-ms" # account-microservice
     ports:
       - "8080:8080"
@@ -11,7 +11,7 @@ services:
     networks:
       - vishalnarsinh
   loans:
-    image: "vishalnarsinh/loans:s4"
+    image: "vishalnarsinh/loans:s6"
     container_name: "loans-ms" # account-microservice
     ports:
       - "8090:8090"
@@ -22,7 +22,7 @@ services:
     networks:
       - vishalnarsinh
   cards:
-    image: "vishalnarsinh/cards:s4"
+    image: "vishalnarsinh/cards:s6"
     container_name: "cards-ms" # account-microservice
     ports:
       - "9000:9000"
