@@ -1,6 +1,7 @@
 package com.vishal.accounts.controller;
 
 import com.vishal.accounts.constants.AccountsConstants;
+import com.vishal.accounts.dto.AccountsContactInfoDto;
 import com.vishal.accounts.dto.CustomerDto;
 import com.vishal.accounts.dto.ErrorResponseDto;
 import com.vishal.accounts.dto.ResponseDto;
@@ -13,10 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,8 @@ import java.util.HashMap;
 public class AccountController {
 
     private final IAccountsService accountsService;
+    private final Environment environment;
+    private final AccountsContactInfoDto accountsContactInfoDto;
 
     @Value("${build.version}")
     private String buildVersion;
@@ -204,5 +207,62 @@ public class AccountController {
         map.put("buildVersion", buildVersion);
         return ResponseEntity.ok(map);
     }
+
+
+    @Operation(
+            summary = "Get Build Information",
+            description = "Get Build Information that is used to track the version of the application"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "HTTP Status OK"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "HTTP Status Internal Server Error",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorResponseDto.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/java-version")
+    public ResponseEntity<?> getJavaVersion() {
+        HashMap<String,String> map = new HashMap<>();
+        String property = environment.getProperty("JAVA_HOME");
+        /*String[] split = property.split("//");
+        String completeVersionName = split[split.length - 1];
+        String[] split1 = completeVersionName.split("-");
+        map.put("javaVersion",split1[1]);*/
+        map.put("java-version", property);
+        return ResponseEntity.ok(map);
+    }
+
+
+    @Operation(
+            summary = "Get Contact Info",
+            description = "Contact Info details that can be reached out in case of any issues"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "HTTP Status OK"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "HTTP Status Internal Server Error",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorResponseDto.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/contact-info")
+    public ResponseEntity<?> getContactInfo() {
+
+        return ResponseEntity.ok(accountsContactInfoDto);
+    }
+
 }
 
